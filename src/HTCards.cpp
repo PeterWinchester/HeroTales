@@ -1,5 +1,5 @@
 /* HTCards.cpp
-   2024/08/04
+   Created - 2024/08/04
    Written by Peter Winchester.
 */
 
@@ -4575,4 +4575,598 @@ bool TaurenAI(int iPlayer, int iCard, int iStatus) {
 		return true;
 	}
 	return false;
+}
+
+int CalcPref_Grail(int iPlayer) {
+	int nPref = 0;
+
+	// 检查金币数，若差一个获胜，则偏好值加 2；若差 2 个获胜，则偏好值加 1
+	if (player[iPlayer].nNumCoin == g_nStdCoinNumber - 1) nPref += 2;
+	else if (player[iPlayer].nNumCoin == g_nStdCoinNumber - 2) nPref++;
+
+	// 检查炸弹怪，若有炸弹怪，则偏好值减 1
+	if (CheckBomb(iPlayer)) nPref--;
+
+	return nPref;
+}
+
+int CalcPref_Minister(int iPlayer) {
+	int nPref = 0;
+
+	// 检查炸弹怪，若有炸弹怪，则偏好值加 1
+	if (CheckBomb(iPlayer)) nPref++;
+	
+	return nPref;
+}
+
+int CalcPref_Princess(int iPlayer) {
+	int nPref = 2; // 公主太厉害了，初始值应为 2
+
+	// 检查火龙，若其他玩家场上有火龙，则偏好值减 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		if (CheckDragon(i)) {
+			nPref--;
+			break;
+		}
+	}
+
+	// 检查金币数，若差 1 个获胜，则偏好值加 2
+	if (player[iPlayer].nNumCoin == g_nStdCoinNumber - 1) nPref += 2;
+
+	// 检查炸弹怪，若有炸弹怪，则偏好值减 1
+	if (CheckBomb(iPlayer)) nPref--;
+	
+	return nPref;
+}
+
+int CalcPref_Warrior_Royal(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的紫牌，若有紫牌，则偏好值加 1
+	if (CheckPurpleCards(iPlayer)) nPref++;
+
+	// 检查魔剑，若有魔剑，则偏好值加 1
+	if (CheckBlade(iPlayer)) nPref++;
+
+	return nPref;
+}
+
+int CalcPref_King(int iPlayer) {
+	int nPref = 0;
+
+	// 检查弃牌区，若有 Lv.4 勇者，则偏好值加 1
+	for (int i = 0; i < g_nAbandoned; i++) {
+		if (cardAbandoned[i].strName == "勇者" && cardAbandoned[i].nLevel == 4) {
+			nPref++;
+			break;
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_SaintSword(int iPlayer) {
+	int nPref = 0;
+
+	// 检查手牌，如果有勇者或狂战士，则偏好值加 1
+	for (int i = 0; i < player[iPlayer].nInHand; i++) {
+		if (player[iPlayer].cardInHand[i].strName == "勇者" || player[iPlayer].cardInHand[i].strName == "狂战士") {
+			nPref++;
+			break;
+		}
+	}
+
+	// 检查火龙，若其他玩家场上有火龙，则偏好值减 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		if (CheckDragon(i)) {
+			nPref--;
+			break;
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_BlackSmith(int iPlayer) {
+	int nPref = 0;
+
+	// 检查手牌，如果有 Lv 或纹章相同的，偏好值加 2
+	for (int i = 0; i < player[iPlayer].nInHand - 1; i++) {
+		for (int j = i + 1; j < player[iPlayer].nInHand; j++) {
+			if (player[iPlayer].cardInHand[i].nLevel != NO_LEVEL && player[iPlayer].cardInHand[j].nLevel != NO_LEVEL) {
+				if (player[iPlayer].cardInHand[i].nLevel == player[iPlayer].cardInHand[j].nLevel) {
+					nPref += 2;
+					break;
+				}
+			} else if (player[iPlayer].cardInHand[i].nArmory != NO_ARMORY && player[iPlayer].cardInHand[j].nArmory != NO_ARMORY) {
+				if (player[iPlayer].cardInHand[i].nArmory == player[iPlayer].cardInHand[j].nArmory) {
+					nPref += 2;
+					break;
+				}
+			}
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_Fighter(int iPlayer) {
+	int nPref = 0;
+
+	// 检查手牌，如果所有手牌的 Lv 之和为偶数且不存在纹章，则偏好值加 2
+	bool bFoundArmory = false;
+	int nSumLevel = 0;
+	for (int i = 0; i < player[iPlayer].nInHand; i++) {
+		if (player[iPlayer].cardInHand[i].nArmory != NO_ARMORY) {
+			bFoundArmory = true;
+			break;
+		}
+		nSumLevel += player[iPlayer].cardInHand[i].nLevel;
+	}
+	if (!bFoundArmory && nSumLevel % 2 == 0) nPref += 2;
+	
+	return 0;
+}
+
+int CalcPref_Monk(int iPlayer) {
+	int nPref = 0;
+
+	// 检查弃牌区，如果有 Lv.1 以外的黄色卡牌，则偏好值加 1
+	for (int i = 0; i < g_nAbandoned; i++) {
+		if (cardAbandoned[i].nLevel != 1 && cardAbandoned[i].nColor == YELLOW) {
+			nPref++;
+			break;
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_Nun(int iPlayer) {
+	return 0;
+}
+
+int CalcPref_Businessman(int iPlayer) {
+	int nPref = 0;
+
+	// 检查场和其他玩家的金币数，若满足条件则偏好值加 2
+	if (player[iPlayer].nOnField) {
+		for (int i = 1; i <= g_nNumPlayer; i++) {
+			if (i == iPlayer) continue;
+			if (player[i].nNumCoin) {
+				nPref += 2;
+				break;
+			}
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_BabyCrane(int iPlayer) {
+	return 0;
+}
+
+int CalcPref_Dancer(int iPlayer) {
+	int nPref = 1; // 舞娘相当于一块钱，初始值给高一点
+
+	// 检查火龙，若其他玩家场上有火龙，则偏好值减 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		if (CheckDragon(i)) {
+			nPref--;
+			break;
+		}
+	}
+	
+	return nPref;
+}
+
+int CalcPref_Master(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的手牌数，若有玩家的手牌数小于 4，偏好值加 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		if (player[iPlayer].nInHand < 4 && player[iPlayer].nInHand > 0) {
+			nPref++;
+			break;
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_Guard(int iPlayer) {
+	return 0;
+}
+
+int CalcPref_HolyKnight(int iPlayer) {
+	return 0;
+}
+
+int CalcPref_Berserker(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的手牌，若有紫牌，则偏好值加 1
+	if (CheckPurpleCards(iPlayer)) nPref++;
+
+	return nPref;
+}
+
+int CalcPref_Warrior_Lv4(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的手牌，若有紫牌，则偏好值加 1
+	if (CheckPurpleCards(iPlayer)) nPref++;
+
+	return nPref;
+}
+
+int CalcPref_Warrior_Lv5(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的手牌，若有紫牌，则偏好值加 2
+	if (CheckPurpleCards(iPlayer)) nPref += 2;
+
+	return nPref;
+}
+
+int CalcPref_BlackKnight(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的手牌，若其他玩家有手牌，则偏好值加 2
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		if (player[iPlayer].nInHand) {
+			nPref += 2;
+			break;
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_Demon(int iPlayer) {
+	int nPref = 0;
+
+	// 检查炸弹怪，若场上有炸弹怪，则偏好值加 1
+	if (CheckBomb(iPlayer)) nPref++;
+
+	return nPref;
+}
+
+int CalcPref_FireDragon(int iPlayer) {
+	int nPref = 0;
+
+	// 检查弃牌区，若有[火]，则偏好值加 1
+	bool bFoundFireAbandoned = false;
+	for (int i = 0; i < g_nAbandoned; i++) {
+		if (cardAbandoned[i].nFire == FIRE) {
+			bFoundFireAbandoned = true;
+			break;
+		}
+	}
+
+	// 若弃牌区有[火]，则检查其他玩家的场牌，若其他玩家场上有带 Lv 的牌，则偏好值再加 1
+	if (bFoundFireAbandoned) {
+		nPref++;
+		for (int i = 1; i <= g_nNumPlayer; i++) {
+			if (i == iPlayer) continue;
+			bool bFoundLevel = false;
+			for (int j = 0; j < player[i].nOnField; j++) {
+				if (player[i].cardOnField[j].nLevel != NO_LEVEL) {
+					nPref++;
+					bFoundLevel = true;
+					break;
+				}
+			}
+			if (bFoundLevel) break;
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_Tyrant(int iPlayer) {
+	int nPref = 2; // 魔王太厉害了，初始值应该是 2
+
+	// 检查手牌，如果有带 Lv 的紫牌，则偏好值加 2
+	for (int i = 0; i < player[iPlayer].nInHand; i++) {
+		if (player[iPlayer].cardInHand[i].nColor == PURPLE && player[iPlayer].cardInHand[i].nLevel != NO_LEVEL) {
+			nPref += 2;
+			break;
+		}
+	}
+
+	// 检查火龙，如果其他玩家有火龙，则偏好值减 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		if (CheckDragon(i)) {
+			nPref--;
+			break;
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_Mimic(int iPlayer) {
+	return 0;
+}
+
+int CalcPref_Blade(int iPlayer) {
+	int nPref = 0;
+
+	// 检查手牌，如果有勇者或狂战士，则偏好值加 1
+	for (int i = 0; i < player[iPlayer].nInHand; i++) {
+		if (player[iPlayer].cardInHand[i].strName == "勇者" || player[iPlayer].cardInHand[i].strName == "狂战士") {
+			nPref++;
+			break;
+		}
+	}
+
+	// 检查火龙，若其他玩家场上有火龙，则偏好值减 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		if (CheckDragon(i)) {
+			nPref--;
+			break;
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_DragonCub(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的场，如果所有场上有牌的玩家的场上都有带 Lv 的牌，则偏好值加 2
+	bool bExistCardOnField = false;
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		if (player[i].nOnField) {
+			bExistCardOnField = true;
+			break;
+		}
+	}
+	if (bExistCardOnField) {
+		bool bAllLevelOnField = true;
+		for (int i = 1; i <= g_nNumPlayer; i++) {
+			if (i == iPlayer) continue;
+			if (player[i].nOnField) {
+				bool bFoundLevel = false;
+				for (int j = 0; j < player[i].nOnField; j++) {
+					if (player[i].cardOnField[j].nLevel != NO_LEVEL) {
+						bFoundLevel = true;
+						break;
+					}
+				}
+				if (!bFoundLevel) {
+					bAllLevelOnField = false;
+					break;
+				}
+			}
+		}
+		if (bAllLevelOnField) nPref += 2;
+	}
+
+	// 检查其他玩家的场，如果有持续牌，偏好值加 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		bool bFoundConsistent = false;
+		for (int j = 0; j < player[i].nOnField; j++) {
+			if (player[i].cardOnField[j].nType == CONSISTENT) {
+				nPref++;
+				bFoundConsistent = true;
+				break;
+			}
+		}
+		if (bFoundConsistent) break;
+	}
+
+	return nPref;
+}
+
+int CalcPref_DragonFlame(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的场，如果有玩家的场上有带 Lv 的牌，则偏好值加 2
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		bool bFoundLevel = false;
+		for (int j = 0; j < player[i].nOnField; j++) {
+			if (player[i].cardOnField[j].nLevel != NO_LEVEL) {
+				nPref += 2;
+				bFoundLevel = true;
+				break;
+			}
+		}
+		if (bFoundLevel) break;
+	}
+
+	// 检查其他玩家的场，如果有持续牌，偏好值加 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		bool bFoundConsistent = false;
+		for (int j = 0; j < player[i].nOnField; j++) {
+			if (player[i].cardOnField[j].nType == CONSISTENT) {
+				nPref++;
+				bFoundConsistent = true;
+				break;
+			}
+		}
+		if (bFoundConsistent) break;
+	}
+
+	return nPref;
+}
+
+int CalcPref_DragonEgg(int iPlayer) {
+	int nPref = 2; // 直接拿火龙，不必多说
+	return nPref;
+}
+
+int CalcPref_Slime(int iPlayer) {
+	int nPref = 0;
+	
+	// 检查魔王，如果有魔王，偏好值加 2
+	if (CheckTyrant(iPlayer)) nPref += 2;
+
+	return nPref;
+}
+
+int CalcPref_Bomb(int iPlayer) {
+	int nPref = 0;
+
+	// 检查魔王，如果有魔王，偏好值加 2
+	if (CheckTyrant(iPlayer)) nPref += 2;
+
+	// 检查其他玩家的场，如果有持续牌，偏好值加 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		bool bFoundConsistent = false;
+		for (int j = 0; j < player[i].nOnField; j++) {
+			if (player[i].cardOnField[j].nType == CONSISTENT) {
+				nPref++;
+				bFoundConsistent = true;
+				break;
+			}
+		}
+		if (bFoundConsistent) break;
+	}
+
+	return nPref;
+}
+
+int CalcPref_Bat(int iPlayer) {
+	int nPref = 0;
+
+	// 检查魔王，如果有魔王，偏好值加 2
+	if (CheckTyrant(iPlayer)) nPref += 2;
+
+	// 检查其他玩家的场，如果有持续牌，偏好值加 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		bool bFoundConsistent = false;
+		for (int j = 0; j < player[i].nOnField; j++) {
+			if (player[i].cardOnField[j].nType == CONSISTENT) {
+				nPref++;
+				bFoundConsistent = true;
+				break;
+			}
+		}
+		if (bFoundConsistent) break;
+	}
+
+	return nPref;
+}
+
+int CalcPref_Bone(int iPlayer) {
+	int nPref = 0;
+
+	// 检查弃牌区，如果有紫色的持续牌，则偏好值加 1
+	for (int i = 0; i < g_nAbandoned; i++) {
+		if (cardAbandoned[i].nColor == PURPLE && cardAbandoned[i].nType == CONSISTENT) {
+			nPref++;
+			break;
+		}
+	}
+
+	// 检查其他玩家的场，如果有火龙，则偏好值减 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		if (CheckDragon(i)) {
+			nPref--;
+			break;
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_Wolfman(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的场，如果有火龙，则偏好值减 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		if (CheckDragon(i)) {
+			nPref--;
+			break;
+		}
+	}
+
+	// 检查弃牌区，如果有纹章牌，则偏好值加 1
+	for (int i = 0; i < g_nAbandoned; i++) {
+		if (cardAbandoned[i].nArmory != NO_ARMORY) {
+			nPref++;
+			break;
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_HarleyQuinn(int iPlayer) {
+	int nPref = 0;
+	// 暂时没有记牌机制，所以没有策略
+	return nPref;
+}
+
+int CalcPref_Witch(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的场，如果有持续牌，偏好值加 1
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		bool bFoundConsistent = false;
+		for (int j = 0; j < player[i].nOnField; j++) {
+			if (player[i].cardOnField[j].nType == CONSISTENT) {
+				nPref++;
+				bFoundConsistent = true;
+				break;
+			}
+		}
+		if (bFoundConsistent) break;
+	}
+
+	return nPref;
+}
+
+int CalcPref_Goblin(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的钱，如果有比自己钱多的玩家，偏好值加 2
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		if (player[i].nNumCoin > player[iPlayer].nNumCoin) {
+			nPref += 2;
+			break;
+		}
+	}
+
+	return nPref;
+}
+
+int CalcPref_Tauren(int iPlayer) {
+	int nPref = 0;
+
+	// 检查其他玩家的场，如果有纹章牌，则偏好值加 2
+	for (int i = 1; i <= g_nNumPlayer; i++) {
+		if (i == iPlayer) continue;
+		bool bFoundArmory = false;
+		for (int j = 0; j < player[i].nOnField; j++) {
+			if (player[i].cardOnField[j].nArmory != NO_ARMORY) {
+				nPref += 2;
+				bFoundArmory = true;
+				break;
+			}
+		}
+		if (bFoundArmory) break;
+	}
+	
+	return nPref;
 }

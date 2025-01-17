@@ -1,5 +1,5 @@
 all : main.o HTGame.o HTFrame.o HTCards.o
-	g++ -g main.o HTGame.o HTFrame.o HTCards.o -o HeroTales -O2 -s -flto
+	g++ -g main.o HTGame.o HTFrame.o HTCards.o -o HeroTales -O2 -s -flto -static
 main.o : src/main.cpp
 	g++ -g -c -I include src/main.cpp
 HTGame.o : src/HTGame.cpp

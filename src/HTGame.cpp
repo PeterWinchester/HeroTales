@@ -1,5 +1,5 @@
 /* HTGame.cpp
-   2024/8/1
+   Created - 2024/8/1
    Written by Peter Winchester
 */
 
@@ -61,7 +61,7 @@ void ReadyStageAI(int iCurrentPlayer) {
 					}
 					CheckNun(iCurrentPlayer);
 					CheckDancer(iCurrentPlayer);
-					if (!g_nGameStatus) return;
+					if (g_nGameStatus != 1) return;
 					CheckMimic(iCurrentPlayer, GET_COIN);
 				}
 			}
@@ -100,27 +100,58 @@ void ReadyStageAI(int iCurrentPlayer) {
 			return;
 		}
 		CheckDancer(iCurrentPlayer);
-		if (!g_nGameStatus) return;
+		if (g_nGameStatus != 1) return;
 		CheckMimic(iCurrentPlayer, GET_COIN);
 	}
 }
 
 void OperationStageAI(int iPlayer) {
+	/**  目前 AI 的总体决策先固定为按出牌、横置、摸牌的顺序操作，日后改进。**/
+
 	/* 出牌 */
+	/* 这是老版本的出牌，不带决策
 	for (int i = 0; i < player[iPlayer].nInHand; i++) {
 		if (player[iPlayer].cardInHand[i].nType != TRIGGER) {
 			player[iPlayer].cardInHand[i].pfnOptAI(iPlayer, i, IN_HAND);
-			if (!g_nGameStatus) return;
+			if (g_nGameStatus != 1) return;
 		}
 	}
-	if (player[iPlayer].nActionPoint) {
-		/* 横置 */
-		/* 可独立横置：国王、妖精、火龙。*/
-		for (int i = 0; i < player[iPlayer].nOnField; i++) {
-			if (CheckTransverse(player[iPlayer].cardOnField[i])) player[iPlayer].cardOnField[i].pfnOptAI(iPlayer, i, ON_FIELD);
-			if (!g_nGameStatus) return;
+	*/
+	// 计算偏好值
+	for (int i = 0; i < player[iPlayer].nInHand; i++) {
+		if (player[iPlayer].cardInHand[i].nType != TRIGGER) {
+			player[iPlayer].cardInHand[i].nPrefer = player[iPlayer].cardInHand[i].pfnCalcPref(iPlayer);
 		}
 	}
+	// 按偏好值从大到小排序
+	for (int i = 0; i < player[iPlayer].nInHand - 1; i++) {
+		if (player[iPlayer].cardInHand[i].nType == TRIGGER) continue;
+		for (int j = i + 1; j < player[iPlayer].nInHand; j++) {
+			if (player[iPlayer].cardInHand[j].nType == TRIGGER) continue;
+			if (player[iPlayer].cardInHand[i].nPrefer < player[iPlayer].cardInHand[j].nPrefer) {
+				swap(player[iPlayer].cardInHand[i], player[iPlayer].cardInHand[j]);
+			}
+		}
+	}
+	// 出牌（和老版本一样按顺序出牌）
+	for (int i = 0; i < player[iPlayer].nInHand; i++) {
+		if (player[iPlayer].cardInHand[i].nType != TRIGGER) {
+			player[iPlayer].cardInHand[i].pfnOptAI(iPlayer, i, IN_HAND);
+			if (g_nGameStatus != 1) return;
+		}
+	}
+	
+	/* 横置 */
+	// if (player[iPlayer].nActionPoint) {
+	/* 可独立横置：国王、妖精、火龙。*/
+	for (int i = 0; i < player[iPlayer].nOnField; i++) {
+		if (CheckTransverse(player[iPlayer].cardOnField[i])) {
+			player[iPlayer].cardOnField[i].pfnOptAI(iPlayer, i, ON_FIELD);
+		}
+		if (g_nGameStatus != 1) return;
+	}
+	// }
+
 	/* 摸牌 */
 	if (player[iPlayer].nActionPoint > 0) {
 		bool bMimic = (player[iPlayer].nActionPoint == 2);
@@ -135,18 +166,18 @@ void OperationStageAI(int iPlayer) {
 		DisplayCards();
 		if (bMimic) {
 			CheckMimic(iPlayer, GET_TWO_CARDS);
-			if (!g_nGameStatus) return;
+			if (g_nGameStatus != 1) return;
 		}
 	}
 	AbandonCardAI(iPlayer);
 }
 
 int CheckGameFinish() {
-	if (!g_nGameStatus) {
+	if (g_nGameStatus == 0) {
 		printf("游戏结束，玩家 %d 获胜！\n", g_iWinPlayer);
 		system("pause");
 		return 1;
-	}
+	} else if (g_nGameStatus == -1) return 1;
 	return 0;
 }
 
@@ -211,7 +242,7 @@ void ReadyStage() {
 					}
 					CheckNun(1);
 					CheckDancer(1);
-					if (!g_nGameStatus) return;
+					if (g_nGameStatus != 1) return;
 					CheckMimic(1, GET_COIN);
 				}
 			}
@@ -250,7 +281,7 @@ void ReadyStage() {
 			return;
 		}
 		CheckDancer(1);
-		if (!g_nGameStatus) return;
+		if (g_nGameStatus != 1) return;
 		CheckMimic(1, GET_COIN);
 	}
 }
@@ -263,9 +294,9 @@ void OperationStage() {
 	bool bRound = true;
 	while (bRound) {
 		DisplayCards();
-		if (!g_nGameStatus) return;
+		if (g_nGameStatus != 1) return;
 		printf("你还有 %d 个行动点。\n", player[1].nActionPoint);
-		printf("请选择你要进行的操作：1.摸牌 2.出牌 3.横置 4.查看弃牌区 5.卡牌说明 6.结束回合\n");
+		printf("请选择你要进行的操作：1.摸牌 2.出牌 3.横置 4.查看弃牌区 5.卡牌说明 6.结束回合 7.中止游戏\n");
 		while (1) {
 			char ch = _getch();
 			if (ch == '1') { //摸牌
@@ -353,12 +384,36 @@ void OperationStage() {
 					system("pause");
 				} else {
 					printf("以下是弃牌区的卡牌：\n");
+					/* 旧版弃牌区，把所有弃牌逐张显示
 					for (int i = 0; i < g_nAbandoned; i++) {
 						printf("%d.", i + 1);
 						DisplayCertainCard(cardAbandoned[i]);
 						printf("\n");
 						if (i % 5 == 4) system("pause");
 					}
+					*/
+					/* 新版弃牌区，统计弃牌区每种卡牌的数量，汇总显示。*/
+					// 按编号排序，使相同的卡牌汇集在一起
+					for (int i = 0; i < g_nAbandoned - 1; i++) {
+						for (int j = i + 1; j < g_nAbandoned; j++) {
+							if (cardAbandoned[i].nNumber > cardAbandoned[j].nNumber) {
+								swap(cardAbandoned[i], cardAbandoned[j]);
+							}	
+						}
+					}
+					// 汇总显示，当出现新卡牌种类时显示卡牌
+					int cnt = 1, nKinds = 1;
+					for (int i = 1; i < g_nAbandoned; i++) {
+						if (!CompareCards(cardAbandoned[i], cardAbandoned[i - 1])) {
+							DisplayCertainCard(cardAbandoned[i - 1]);
+							printf(" * %d 张\n", cnt);
+							cnt = 1;
+							nKinds++;
+							if (nKinds % 5 == 1) system("pause");
+						} else cnt++;
+					}
+					DisplayCertainCard(cardAbandoned[g_nAbandoned - 1]);
+					printf(" * %d 张\n", cnt);
 					system("pause");
 				}
 				break;
@@ -371,12 +426,15 @@ void OperationStage() {
 					system("pause");
 				} else bRound = false;
 				break;
+			} else if (ch == '7') {
+				g_nGameStatus = -1;
+				return;
 			}
 		}
 	}
 	if (nGetCard == 2) {
 		CheckMimic(1, GET_TWO_CARDS);
-		if (!g_nGameStatus) return;
+		if (g_nGameStatus != 1) return;
 	}
 	AbandonCard();
 }
@@ -681,7 +739,7 @@ bool CheckMimic(int iPlayer, int nType) {
 				return true;
 			}
 			CheckDancer(iPlayerWithMimic[0]);
-			if (!g_nGameStatus) return true;
+			if (g_nGameStatus != 1) return true;
 			CheckMimic(iPlayerWithMimic[0], GET_COIN);
 		}
 	} else if (nPlayerWithMimic > 1) {
@@ -720,7 +778,7 @@ bool CheckMimic(int iPlayer, int nType) {
 				return true;
 			}
 			CheckDancer(iPlayerWithMimic[x]);
-			if (!g_nGameStatus) return true;
+			if (g_nGameStatus != 1) return true;
 			CheckMimic(iPlayerWithMimic[x], GET_COIN);
 		}
 	}
@@ -940,7 +998,7 @@ bool CheckTyrant(int iPlayer) {
 				return true;
 			}
 			CheckDancer(1);
-			if (!g_nGameStatus) return true;
+			if (g_nGameStatus != 1) return true;
 			CheckMimic(1, GET_COIN);
 		}
 	} else {
@@ -955,7 +1013,7 @@ bool CheckTyrant(int iPlayer) {
 			return true;
 		}
 		CheckDancer(iPlayer);
-		if (!g_nGameStatus) return true;
+		if (g_nGameStatus != 1) return true;
 		CheckMimic(iPlayer, GET_COIN);
 	}
 	return true;
@@ -970,4 +1028,18 @@ void IllustrateCard(Card c) {
 	else SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0d);
 	cout << "：" << c.strDescription << "***" << endl;
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 0x0f);
+}
+
+bool CheckBomb(int iPlayer) {
+	for (int i = 0; i < player[iPlayer].nOnField; i++) {
+		if (player[iPlayer].cardOnField[i].strName == "炸弹怪") return true;
+	}
+	return false;
+}
+
+bool CheckDragon(int iPlayer) {
+	for (int i = 0; i < player[iPlayer].nOnField; i++) {
+		if (player[iPlayer].cardOnField[i].strName == "火龙") return true;
+	}
+	return false;
 }

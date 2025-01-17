@@ -1,5 +1,5 @@
 /* HTFrame.cpp
-   2024/8/1
+   Created - 2024/8/1
    Written by Peter Winchester.
 */
 
@@ -13,22 +13,25 @@ vector<Card> cardAbandoned;
 Player player[MAX_NUM_PLAYER + 1];
 
 Card::Card() {
-	nLevel = NO_LEVEL;
-	nArmory = NO_ARMORY;
-	nType = ORDINARY;
-	nColor = NO_COLOR;
-	nStatus = IN_LIBRARY;
-	nFire = NO_FIRE;
-	bTrans = false;
-	pfnOpt = NULL;
-	pfnOptAI = NULL;
+	nLevel      = NO_LEVEL;
+	nArmory     = NO_ARMORY;
+	nType       = ORDINARY;
+	nColor      = NO_COLOR;
+	nStatus     = IN_LIBRARY;
+	nFire       = NO_FIRE;
+	nNumber     = 0;
+	nPrefer     = 0;
+	bTrans      = false;
+	pfnOpt      = NULL;
+	pfnOptAI    = NULL;
+	pfnCalcPref = NULL;
 }
 
 Player::Player() {
-	nNumCoin = 0;
+	nNumCoin     = 0;
 	nActionPoint = 2;
-	nInHand = 0;
-	nOnField = 0;
+	nInHand      = 0;
+	nOnField     = 0;
 }
 
 void DealCards() {

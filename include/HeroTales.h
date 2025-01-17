@@ -1,5 +1,5 @@
 /* HeroTales.h
-   2024/6/23
+   Created - 2024/6/23
    Written by Peter Winchester.
 */
 

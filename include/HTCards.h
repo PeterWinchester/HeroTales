@@ -1,5 +1,5 @@
 /* HTCards.h
-   2024/08/04
+   Created - 2024/08/04
    Written by Peter Winchester.
 */
 
@@ -8,9 +8,9 @@
 
 #include "HeroTales.h"
 
-bool Grail(int, int); //圣杯
-bool Minister(int, int); //大臣
-bool Princess(int, int); //公主
+bool Grail(int, int);         //圣杯
+bool Minister(int, int);      //大臣
+bool Princess(int, int);      //公主
 bool Warrior_Royal(int, int); //[皇]勇者
 bool King(int, int);          //国王
 bool SaintSword(int, int);    //圣剑
@@ -45,9 +45,10 @@ bool HarleyQuinn(int, int);   //小丑女
 bool Witch(int, int);         //女巫
 bool Goblin(int, int);        //哥布林
 bool Tauren(int, int);        //牛头人
-bool GrailAI(int, int, int);    //圣杯
-bool MinisterAI(int, int, int); //大臣
-bool PrincessAI(int, int, int); //公主
+
+bool GrailAI(int, int, int);         //圣杯
+bool MinisterAI(int, int, int);      //大臣
+bool PrincessAI(int, int, int);      //公主
 bool Warrior_RoyalAI(int, int, int); //[皇]勇者
 bool KingAI(int, int, int);          //国王
 bool SaintSwordAI(int, int, int);    //圣剑
@@ -82,5 +83,43 @@ bool HarleyQuinnAI(int, int, int);   //小丑女
 bool WitchAI(int, int, int);         //女巫
 bool GoblinAI(int, int, int);        //哥布林
 bool TaurenAI(int, int, int);        //牛头人
+
+int CalcPref_Grail(int);         //圣杯
+int CalcPref_Minister(int);      //大臣
+int CalcPref_Princess(int);      //公主
+int CalcPref_Warrior_Royal(int); //[皇]勇者
+int CalcPref_King(int);          //国王
+int CalcPref_SaintSword(int);    //圣剑
+int CalcPref_BlackSmith(int);    //铁匠
+int CalcPref_Fighter(int);       //格斗家
+int CalcPref_Monk(int);          //僧侣
+int CalcPref_Nun(int);           //修女
+int CalcPref_Businessman(int);   //商人
+int CalcPref_BabyCrane(int);     //送子鹤
+int CalcPref_Dancer(int);        //舞娘
+int CalcPref_Master(int);        //法师
+int CalcPref_Guard(int);         //卫兵
+int CalcPref_HolyKnight(int);    //圣骑士
+int CalcPref_Berserker(int);     //狂战士
+int CalcPref_Warrior_Lv4(int);   //Lv.4勇者
+int CalcPref_Warrior_Lv5(int);   //Lv.5勇者
+int CalcPref_BlackKnight(int);   //黑骑士
+int CalcPref_Demon(int);         //妖精
+int CalcPref_FireDragon(int);    //火龙
+int CalcPref_Tyrant(int);        //魔王
+int CalcPref_Mimic(int);         //宝箱怪
+int CalcPref_Blade(int);         //魔剑
+int CalcPref_DragonCub(int);     //龙幼崽
+int CalcPref_DragonFlame(int);   //龙炎
+int CalcPref_DragonEgg(int);     //龙蛋
+int CalcPref_Slime(int);         //史莱姆
+int CalcPref_Bomb(int);          //炸弹怪
+int CalcPref_Bat(int);           //蝙蝠
+int CalcPref_Bone(int);          //白骨
+int CalcPref_Wolfman(int);       //狼人
+int CalcPref_HarleyQuinn(int);   //小丑女
+int CalcPref_Witch(int);         //女巫
+int CalcPref_Goblin(int);        //哥布林
+int CalcPref_Tauren(int);        //牛头人
 
 #endif //HTCARDS_H
